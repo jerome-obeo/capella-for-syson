@@ -13,9 +13,9 @@
 
 package org.eclipse.capella.diagram.customization.services;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,9 +41,9 @@ import org.springframework.stereotype.Service;
 public class DiagramFilterService implements IDiagramFilterService {
 
     /**
-     * RepresentationId to FilterId map
+     * RepresentationId to filter states map.
      */
-    private final ConcurrentHashMap<String, List<String>> activatedFilters;
+    private final ConcurrentHashMap<String, Map<String, Boolean>> filterStates;
 
     private final List<IDiagramFilter> filters;
 
@@ -61,7 +61,7 @@ public class DiagramFilterService implements IDiagramFilterService {
         this.executors = Objects.requireNonNull(executors);
         this.representationDescriptionSearchService = Objects.requireNonNull(representationDescriptionSearchService);
         this.representationMetadataSearchService = Objects.requireNonNull(representationMetadataSearchService);
-        this.activatedFilters = new ConcurrentHashMap<>();
+        this.filterStates = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -89,8 +89,9 @@ public class DiagramFilterService implements IDiagramFilterService {
 
     @Override
     public boolean isDiagramFilterActive(String diagramFilterId, String representationId) {
-        if (this.activatedFilters.contains(representationId)) {
-            return this.activatedFilters.get(representationId).contains(diagramFilterId);
+        Map<String, Boolean> representationFilterStates = this.filterStates.get(representationId);
+        if (representationFilterStates != null && representationFilterStates.containsKey(diagramFilterId)) {
+            return representationFilterStates.get(diagramFilterId);
         }
         // initial value of filters
         return this.filters.stream()
@@ -103,15 +104,7 @@ public class DiagramFilterService implements IDiagramFilterService {
     @Override
     public void setDiagramFilterState(IEditingContext editingContext, DiagramContext diagramContext, String diagramFilterId, boolean state) {
         String representationId = diagramContext.diagram().getId();
-        if (state) {
-            // add the diagram id as an activated filter
-            this.activatedFilters.computeIfAbsent(representationId, key -> new ArrayList<String>()).add(diagramFilterId);
-        } else {
-            // remove the activated filter
-            if (this.activatedFilters.contains(representationId)) {
-                this.activatedFilters.get(representationId).remove(diagramFilterId);
-            }
-        }
+        this.filterStates.computeIfAbsent(representationId, key -> new ConcurrentHashMap<>()).put(diagramFilterId, state);
         // manage filter change execution
         this.executors.stream()
                 .filter(executor -> executor.canHandle(editingContext, representationId, diagramFilterId))
