@@ -264,6 +264,7 @@ public abstract class AbstractCapellaCodingRulesTests extends AbstractCodingRule
         JavaClasses transverseServiceClasses = new ClassFileImporter().importPackages("org.eclipse.capella.model.transverse.services..");
 
         Set<String> testableMethodNames = Stream.of(
+                transverseServiceClasses.get("org.eclipse.capella.model.transverse.services.CommonQueryService"),
                 transverseServiceClasses.get("org.eclipse.capella.model.transverse.services.CommonCreationService"),
                 transverseServiceClasses.get("org.eclipse.capella.model.transverse.services.CommonMoveService"),
                 transverseServiceClasses.get("org.eclipse.capella.model.transverse.services.CommonUpdateService"),
