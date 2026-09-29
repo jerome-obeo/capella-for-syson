@@ -36,6 +36,7 @@ import org.eclipse.sirius.web.domain.boundedcontexts.representationdata.services
 import org.eclipse.sirius.web.domain.boundedcontexts.semanticdata.SemanticData;
 import org.eclipse.syson.sysml.ActionUsage;
 import org.eclipse.syson.sysml.FlowUsage;
+import org.eclipse.syson.sysml.Usage;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.stereotype.Service;
 
@@ -62,6 +63,10 @@ public class SemanticBrowserService {
     private static final String FUNCTION_CATEGORY_OUT_FLOW = "Out Flow Ports";
 
     private static final String FUNCTION_CATEGORY_OUTGOING_FUNC_EXCHANGES = "Outgoing Functional Exchanges";
+
+    private static final String REALIZES_CATEGORY = "Realizes";
+
+    private static final String IS_REALIZED_BY_CATEGORY = "Is Realized By";
 
     private final IIdentityService identityService;
 
@@ -198,12 +203,17 @@ public class SemanticBrowserService {
             }
 
         }
+        if (element instanceof Usage usage && !this.commonQueryService.getRealizerElements(usage).isEmpty()) {
+            result.add(IS_REALIZED_BY_CATEGORY);
+        }
         return result;
     }
 
     public List<?> getReferencingCategoryElements(EObject element, String category) {
         List<?> result = List.of();
-        if (element instanceof ActionUsage actionUsage && this.commonQueryService.isFunction(element)) {
+        if (element instanceof Usage usage && IS_REALIZED_BY_CATEGORY.equals(category)) {
+            result = this.commonQueryService.getRealizerElements(usage);
+        } else if (element instanceof ActionUsage actionUsage && this.commonQueryService.isFunction(element)) {
             result = this.getFunctionReferencingCategoryElements(actionUsage, category);
         }
         return result;
@@ -234,12 +244,17 @@ public class SemanticBrowserService {
             }
 
         }
+        if (element instanceof Usage usage && !this.commonQueryService.getRealizes(usage).isEmpty()) {
+            result.add(REALIZES_CATEGORY);
+        }
         return result;
     }
 
     public List<?> getReferencedCategoryElements(EObject element, String category) {
         List<?> result = List.of();
-        if (element instanceof ActionUsage actionUsage && this.commonQueryService.isFunction(element)) {
+        if (element instanceof Usage usage && REALIZES_CATEGORY.equals(category)) {
+            result = this.commonQueryService.getRealizes(usage);
+        } else if (element instanceof ActionUsage actionUsage && this.commonQueryService.isFunction(element)) {
             result = this.getFunctionReferencedCategoryElements(actionUsage, category);
         }
         return result;
